@@ -5,9 +5,9 @@
 
 template<typename ReturnType>
 ThreadPool<ReturnType>::ThreadPool() : 
-	numThreads_(std::thread::hardware_concurrency() - 1), // leave last one for main thread!
-	terminate_(false),
-	stopped_(false)
+    numThreads_(std::thread::hardware_concurrency() - 1), // leave last one for main thread!
+    terminate_(false),
+    stopped_(false)
 {
     for (int i = 0; i < numThreads_; i++) pool_.push_back(std::thread(&ThreadPool::Run, this));
 }
