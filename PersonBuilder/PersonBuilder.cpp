@@ -47,7 +47,3 @@ int main() {
 
     return 0;
 }
-    
-class Test {
-    
-};
