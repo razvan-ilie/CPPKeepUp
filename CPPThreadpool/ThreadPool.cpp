@@ -5,16 +5,16 @@
 
 template<typename ReturnType>
 ThreadPool<ReturnType>::ThreadPool() : 
-    numThreads_(std::thread::hardware_concurrency() - 1), // leave last one for main thread!
-    terminate_(false),
-    stopped_(false)
+    m_numThreads(std::thread::hardware_concurrency() - 1), // leave last one for main thread!
+    m_terminate(false),
+    m_stopped(false)
 {
-    for (int i = 0; i < numThreads_; i++) pool_.push_back(std::thread(&ThreadPool::Run, this));
+    for (int i = 0; i < m_numThreads; i++) m_pool.push_back(std::thread(&ThreadPool::Run, this));
 }
 
 template<typename ReturnType>
 ThreadPool<ReturnType>::~ThreadPool() {
-    if (!stopped_) Shutdown();
+    if (!m_stopped) Shutdown();
 }
 
 template<typename ReturnType>
@@ -22,20 +22,20 @@ std::future<ReturnType> ThreadPool<ReturnType>::AddTask(std::function<ReturnType
     std::packaged_task<ReturnType()> packagedTask(task);
     std::future<ReturnType> fut = packagedTask.get_future();
     {
-        std::unique_lock<std::mutex> lock(jobsMutex_);
-        jobs_.push_back(std::move(packagedTask));
+        std::unique_lock<std::mutex> lock(m_jobsMutex);
+        m_jobs.push_back(std::move(packagedTask));
     }
-    condition_.notify_one();
+    m_condition.notify_one();
     return fut;
 }
 
 template<typename ReturnType>
 void ThreadPool<ReturnType>::Shutdown() {
-    terminate_ = true; // atomic
-    condition_.notify_all();
-    for (std::thread& th : pool_) th.join();
-    pool_.clear();
-    stopped_ = true;
+    m_terminate = true; // atomic
+    m_condition.notify_all();
+    for (std::thread& th : m_pool) th.join();
+    m_pool.clear();
+    m_stopped = true;
 }
 
 template<typename ReturnType>
@@ -43,13 +43,13 @@ void ThreadPool<ReturnType>::Run() {
     std::packaged_task<ReturnType()> job;
     while (true) {
         {
-            std::unique_lock<std::mutex> lock(jobsMutex_);
-            condition_.wait(lock, [&] { return !jobs_.empty() || terminate_.load(); });
-            if (!jobs_.empty()) {
-                job = std::move(jobs_.front());
-                jobs_.pop_front();
+            std::unique_lock<std::mutex> lock(m_jobsMutex);
+            m_condition.wait(lock, [&] { return !m_jobs.empty() || m_terminate.load(); });
+            if (!m_jobs.empty()) {
+                job = std::move(m_jobs.front());
+                m_jobs.pop_front();
             }
-            else if (terminate_.load())
+            else if (m_terminate.load())
                 break;
         }
         job();

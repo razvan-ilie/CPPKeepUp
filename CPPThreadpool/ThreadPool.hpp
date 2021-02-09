@@ -23,14 +23,14 @@ public:
 private:
     void Run();
 
-    unsigned int numThreads_;
-    std::atomic_bool terminate_;
-    bool stopped_;
+    unsigned int m_numThreads;
+    std::atomic_bool m_terminate;
+    bool m_stopped;
 
-    std::condition_variable condition_;
-    std::vector<std::thread> pool_;
-    std::deque<std::packaged_task<ReturnType()>> jobs_;
-    std::mutex jobsMutex_;
+    std::condition_variable m_condition;
+    std::vector<std::thread> m_pool;
+    std::deque<std::packaged_task<ReturnType()>> m_jobs;
+    std::mutex m_jobsMutex;
 };
 
 #include "ThreadPool.cpp"
