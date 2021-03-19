@@ -16,34 +16,34 @@ class Person {
 public:
     // Need this so the PersonBuilder can set the Person's private data without (messy) setters
     // Also to gain access to the private constructor
-    friend class PersonBuilder;
-
-    void printInfo() {
-        std::cout << "Age: " << m_age << "\nName: " << m_name << "\nSalary: " << m_salary << "\nNet worth: " << m_netWorth << "\n";
+    friend class MakePerson;
+    friend std::ostream& operator << (std::ostream& os, const Person& p) {
+        return os << "Name: " << p.m_name
+            << "\nAge: " << p.m_age
+            << "\nSalary: " << p.m_salary
+            << "\nNet worth: " << p.m_netWorth;
     }
 };
 
-class PersonBuilder {
+class MakePerson {
     Person m_person;
 
 public:
-    PersonBuilder& setName(const std::string& name) { m_person.m_name = name; return *this; }
-    PersonBuilder& setAge(int age) { m_person.m_age = age; return *this; }
-    PersonBuilder& setSalary(double salary) { m_person.m_salary = salary; return *this; }
-    PersonBuilder& setNetWorth(double netWorth) { m_person.m_netWorth = netWorth; return *this; }
-    Person build() { return m_person; }
+    MakePerson& withName(const std::string& name) { m_person.m_name = name; return *this; }
+    MakePerson& withAge(int age) { m_person.m_age = age; return *this; }
+    MakePerson& withSalary(double salary) { m_person.m_salary = salary; return *this; }
+    MakePerson& withNetWorth(double netWorth) { m_person.m_netWorth = netWorth; return *this; }
+    operator Person() { return m_person; } // can implicitly convert to Person
 };
 
 int main() {
-    PersonBuilder builder;
-    Person p = builder
-        .setName("Ruse")
-        .setAge(24)
-        .setSalary(100.)
-        .setNetWorth(100.)
-        .build();
+    Person p = MakePerson()
+        .withName("Ruse")
+        .withAge(24)
+        .withSalary(100.)
+        .withNetWorth(100.);
 
-    p.printInfo();
+    std::cout << p << "\n";
 
     return 0;
 }
